@@ -4,6 +4,7 @@ $(document).ready(function() {
       const THEME_KEY = "theme.v1";
       const state = {
         filter: "all",
+        search: "",
         todos: load()
       };
       const theme = {
@@ -60,7 +61,8 @@ $(document).ready(function() {
           id: uid(),
           title,
           completed: false,
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          dueAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 1 week from now
         });
         save();
         render();
@@ -96,13 +98,39 @@ $(document).ready(function() {
         render();
       }
 
+      function debounce(fn, delay) {
+        let timeoutId;
+        return function(...args) {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
       // --- Rendering -----------------------------------------------------------
       function getFiltered() {
+        const now = new Date();
+        let filtered;
+
         switch (state.filter) {
-          case "active": return state.todos.filter(t => !t.completed);
-          case "completed": return state.todos.filter(t => t.completed);
-          default: return state.todos;
+          case "active":
+            filtered = state.todos.filter(t => !t.completed);
+            break;
+          case "completed":
+            filtered = state.todos.filter(t => t.completed);
+            break;
+          case "overdue":
+            filtered = state.todos.filter(t => !t.completed && t.dueAt && new Date(t.dueAt) < now);
+            break;
+          default:
+            filtered = state.todos;
         }
+
+        if (state.search) {
+          const searchTerm = state.search.toLowerCase();
+          return filtered.filter(t => t.title.toLowerCase().includes(searchTerm));
+        }
+
+        return filtered;
       }
 
       function createTodoItem(todo) {
@@ -255,6 +283,12 @@ $(document).ready(function() {
         renderTheme();
       });
 
+      $("#search").on('keyup', debounce(function(e) {
+        state.search = $(this).val();
+        render();
+      }, 300));
+
+
       // --- Bootstrap ------------------------------------------------------------
       // Only seed initial data for first-time users (when localStorage has never been initialized)
       const hasBeenInitialized = localStorage.getItem(LS_KEY) !== null;
@@ -263,21 +297,24 @@ $(document).ready(function() {
         state.todos = [
           {
             id: uid(),
-            title: "Explore the app",
+            title: "Submit talk for conference",
+            completed: false,
+            createdAt: Date.now() - 86400000 * 2, // 2 days ago
+            dueAt: Date.now() - 86400000 // 1 day ago
+          },
+          {
+            id: uid(),
+            title: "Follow up on PR",
             completed: true,
-            createdAt: Date.now() - 86400000
+            createdAt: Date.now() - 86400000, // 1 day ago
+            dueAt: Date.now() + 86400000 * 2 // 2 days from now
           },
           {
             id: uid(),
-            title: "Post a Tweet about #GoogleCloudRoadshow",
+            title: "Plan team offsite",
             completed: false,
-            createdAt: Date.now()
-          },
-          {
-            id: uid(),
-            title: "Call Uncle Bob",
-            completed: false,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            dueAt: Date.now() + 86400000 * 7 // 1 week from now
           }
         ];
         save();

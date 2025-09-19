@@ -96,10 +96,16 @@
       </section>
 
       <section class="mb-5">
+        <input id="search" type="text" placeholder="Search..." aria-label="Search"
+               class="w-full px-4 py-3.5 rounded-xl border border-border-light bg-slate-900/80 text-text text-base transition-all duration-200 focus:outline-none focus:border-accent focus:ring-3 focus:ring-accent/10 placeholder:text-muted" />
+      </section>
+
+      <section class="mb-5">
         <div class="flex gap-2 flex-wrap" role="tablist" aria-label="Filters">
           <span class="pill active px-4 py-2 rounded-full border border-accent text-accent bg-accent/15 cursor-pointer text-sm font-medium transition-all duration-200" data-filter="all" role="tab" aria-selected="true">All</span>
           <span class="pill px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent" data-filter="active" role="tab" aria-selected="false">Active</span>
           <span class="pill px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent" data-filter="completed" role="tab" aria-selected="false">Completed</span>
+          <span class="pill px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent" data-filter="overdue" role="tab" aria-selected="false">Overdue</span>
           <span class="pill px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent" data-action="clearCompleted" title="Remove all completed">Clear Completed</span>
         </div>
       </section>
