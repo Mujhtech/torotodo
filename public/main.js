@@ -183,6 +183,39 @@ $(document).ready(function() {
         URL.revokeObjectURL(url);
       }
 
+      function exportCSV() {
+        const headers = ["id", "title", "completed", "createdAt", "dueAt"];
+        const BOM = "\uFEFF";
+        let csv = BOM + headers.join(",") + "\\n";
+
+        const escape = (val) => {
+          val = String(val ?? "");
+          if (/[",\\n]/.test(val)) {
+            val = '"' + val.replace(/"/g, '""') + '"';
+          }
+          return val;
+        };
+
+        state.todos.forEach(todo => {
+          const row = [
+            escape(todo.id),
+            escape(todo.title),
+            escape(todo.completed),
+            escape(todo.createdAt),
+            escape(todo.dueAt)
+          ].join(",");
+          csv += row + "\\n";
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const $a = $('<a>').attr({ href: url, download: "todos.csv" });
+        $('body').append($a);
+        $a[0].click();
+        $a.remove();
+        URL.revokeObjectURL(url);
+      }
+
       function importJSON(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -236,6 +269,7 @@ $(document).ready(function() {
       });
 
       $("#exportBtn").on('click', exportJSON);
+      $("#exportCsvBtn").on('click', exportCSV);
 
       $("#importBtn").on('click', function() {
         $("#fileInput").click();
