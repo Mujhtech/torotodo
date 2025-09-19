@@ -67,6 +67,9 @@ $(document).ready(function() {
       }
 
       function toggleTodo(id) {
+        const $li = $(`[data-id="${id}"]`);
+        if ($li.hasClass('editing')) return;
+
         const todo = state.todos.find(t => t.id === id);
         if (todo) {
           todo.completed = !todo.completed;
@@ -121,11 +124,16 @@ $(document).ready(function() {
         $li.find('button').on('click', () => deleteTodo(todo.id));
 
         // Inline editing
-        $li.find('span').on('dblclick', function() {
-          const $span = $(this);
-          const $input = $(`<input class="flex-1 px-3 py-2 rounded-lg border border-accent bg-slate-900/90 text-text text-base" value="${todo.title}">`);
+        $li.on('dblclick', function() {
+          const $li = $(this);
+          if ($li.hasClass('editing')) return;
 
-          $span.replaceWith($input);
+          $li.addClass('editing');
+          const $span = $li.find('span');
+          const $input = $(`<input type="text" class="flex-1 px-3 py-2 rounded-lg border border-accent bg-slate-900/90 text-text text-base" value="${todo.title}">`);
+
+          $span.hide();
+          $span.after($input);
           $input.focus().select();
 
           const commit = () => {
@@ -135,11 +143,18 @@ $(document).ready(function() {
             } else {
               deleteTodo(todo.id);
             }
+            $li.removeClass('editing');
+          };
+
+          const cancel = () => {
+            $input.remove();
+            $span.show();
+            $li.removeClass('editing');
           };
 
           $input.on('keydown', function(e) {
             if (e.key === 'Enter') commit();
-            if (e.key === 'Escape') render();
+            if (e.key === 'Escape') cancel();
           }).on('blur', commit);
         });
 
