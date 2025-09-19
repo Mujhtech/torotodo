@@ -2,8 +2,10 @@ $(document).ready(function() {
       // --- Storage & State ------------------------------------------------------
       const LS_KEY = "todos.v1";
       const THEME_KEY = "theme.v1";
+      const SORT_KEY = "todos.sort.v1";
       const state = {
         filter: "all",
+        sortBy: loadSort(),
         todos: load()
       };
       const theme = {
@@ -17,6 +19,14 @@ $(document).ready(function() {
 
       function saveTheme() {
         localStorage.setItem(THEME_KEY, theme.current);
+      }
+
+      function loadSort() {
+        return sessionStorage.getItem(SORT_KEY) || "createdAt";
+      }
+
+      function saveSort() {
+        sessionStorage.setItem(SORT_KEY, state.sortBy);
       }
 
       function renderTheme() {
@@ -52,7 +62,7 @@ $(document).ready(function() {
       }
 
       // --- CRUD Operations -----------------------------------------------------
-      function addTodo(title) {
+      function addTodo(title, dueAt) {
         title = (title || "").trim();
         if (!title) return;
 
@@ -60,7 +70,8 @@ $(document).ready(function() {
           id: uid(),
           title,
           completed: false,
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          dueAt: dueAt ? new Date(dueAt).getTime() : null
         });
         save();
         render();
@@ -105,12 +116,41 @@ $(document).ready(function() {
         }
       }
 
+      function getSorted(todos) {
+        const sorted = [...todos];
+        switch (state.sortBy) {
+          case 'dueAt':
+            sorted.sort((a, b) => {
+              if (a.dueAt && b.dueAt) return a.dueAt - b.dueAt;
+              if (a.dueAt) return -1;
+              if (b.dueAt) return 1;
+              return 0;
+            });
+            break;
+          case 'completed':
+            sorted.sort((a, b) => a.completed - b.completed);
+            break;
+          case 'createdAt':
+          default:
+            sorted.sort((a, b) => b.createdAt - a.createdAt);
+            break;
+        }
+        return sorted;
+      }
+
       function createTodoItem(todo) {
+        const dueDate = todo.dueAt ? new Date(todo.dueAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+        const isDue = todo.dueAt && !todo.completed && (new Date(todo.dueAt) < new Date());
+        const dueClass = isDue ? 'text-danger' : 'text-muted';
+
         const $li = $(`
           <li class="flex items-center gap-3 py-4 border-b border-border transition-all duration-200 hover:bg-accent/5 hover:rounded-lg hover:mx-[-8px] hover:px-2 ${todo.completed ? 'opacity-75' : ''}" data-id="${todo.id}">
             <label class="flex-1 flex items-center gap-3 cursor-pointer">
               <input type="checkbox" class="w-5 h-5 accent-accent cursor-pointer" ${todo.completed ? 'checked' : ''}>
-              <span class="flex-1 text-base leading-relaxed ${todo.completed ? 'text-muted line-through' : 'text-text'}">${todo.title}</span>
+              <div class="flex-1">
+                <span class="text-base leading-relaxed ${todo.completed ? 'text-muted line-through' : 'text-text'}">${todo.title}</span>
+                ${dueDate ? `<div class="text-sm ${dueClass}">${dueDate}</div>` : ''}
+              </div>
             </label>
             <button class="w-6 h-6 md:w-6 md:h-6 w-7 h-7 rounded-full bg-transparent text-muted border border-transparent flex items-center justify-center text-base md:text-base text-lg opacity-60 md:opacity-60 opacity-50 transition-all duration-200 hover:bg-danger/10 hover:text-danger hover:border-danger hover:opacity-100 hover:scale-110 md:hover:scale-110 hover:scale-115" title="Delete task">×</button>
           </li>
@@ -121,7 +161,7 @@ $(document).ready(function() {
         $li.find('button').on('click', () => deleteTodo(todo.id));
 
         // Inline editing
-        $li.find('span').on('dblclick', function() {
+        $li.find('.flex-1 > span').on('dblclick', function() {
           const $span = $(this);
           const $input = $(`<input class="flex-1 px-3 py-2 rounded-lg border border-accent bg-slate-900/90 text-text text-base" value="${todo.title}">`);
 
@@ -150,25 +190,27 @@ $(document).ready(function() {
         const $list = $("#list");
         $list.empty();
 
-        getFiltered().forEach(todo => {
+        const filtered = getFiltered();
+        const sorted = getSorted(filtered);
+
+        sorted.forEach(todo => {
           $list.append(createTodoItem(todo));
         });
 
         $("#count").text(state.todos.length);
 
         // Update filter pills
-        $(".pill[role='tab']").each(function() {
+        $(".pill[data-filter]").each(function() {
           const $pill = $(this);
           const isActive = $pill.data('filter') === state.filter;
+          $pill.toggleClass('active', isActive).attr('aria-selected', isActive);
+        });
 
-          $pill.removeClass('active')
-               .attr('aria-selected', isActive);
-
-          if (isActive) {
-            $pill.addClass('active px-4 py-2 rounded-full border border-accent text-accent bg-accent/15 cursor-pointer text-sm font-medium transition-all duration-200');
-          } else {
-            $pill.addClass('px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent');
-          }
+        // Update sort pills
+        $(".pill[data-sort]").each(function() {
+            const $pill = $(this);
+            const isActive = $pill.data('sort') === state.sortBy;
+            $pill.toggleClass('active', isActive).attr('aria-selected', isActive);
         });
       }
 
@@ -195,7 +237,8 @@ $(document).ready(function() {
               id: t.id || uid(),
               title: String(t.title || "").trim(),
               completed: !!t.completed,
-              createdAt: Number(t.createdAt || Date.now())
+              createdAt: Number(t.createdAt || Date.now()),
+              dueAt: t.dueAt ? Number(t.dueAt) : null
             })).filter(t => t.title);
 
             save();
@@ -210,15 +253,19 @@ $(document).ready(function() {
       // --- Event Handlers ------------------------------------------------------
       $("#addBtn").on('click', function() {
         const title = $("#newTodo").val();
-        addTodo(title);
+        const dueAt = $("#newTodoDueDate").val();
+        addTodo(title, dueAt);
         $("#newTodo").val('').focus();
+        $("#newTodoDueDate").val('');
       });
 
       $("#newTodo").on('keydown', function(e) {
         if (e.key === 'Enter') {
           const title = $(this).val();
-          addTodo(title);
-          $(this).val('');
+          const dueAt = $("#newTodoDueDate").val();
+          addTodo(title, dueAt);
+          $("#newTodo").val('');
+          $("#newTodoDueDate").val('');
         }
       });
 
@@ -226,12 +273,17 @@ $(document).ready(function() {
         const $pill = $(this);
         const filter = $pill.data('filter');
         const action = $pill.data('action');
+        const sort = $pill.data('sort');
 
         if (filter) {
           state.filter = filter;
           render();
         } else if (action === 'clearCompleted') {
           clearCompleted();
+        } else if (sort) {
+          state.sortBy = sort;
+          saveSort();
+          render();
         }
       });
 

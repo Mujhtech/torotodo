@@ -75,6 +75,20 @@
     .animate-fade-in {
       animation: fadeIn 0.6s ease-out;
     }
+    .pill {
+      border-color: var(--border-light);
+      color: var(--muted);
+    }
+    .pill:hover {
+      background-color: var(--accent-hover-bg, rgba(59, 130, 246, 0.1));
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .pill.active {
+      border-color: var(--accent);
+      background-color: var(--accent-bg, rgba(59, 130, 246, 0.15));
+      color: var(--accent);
+    }
   </style>
 </head>
 
@@ -90,6 +104,8 @@
         <div class="flex gap-3 items-center md:flex-row flex-col">
           <input id="newTodo" type="text" placeholder="What needs to be done?" aria-label="New todo" 
                  class="flex-1 px-4 py-3.5 rounded-xl border border-border-light bg-slate-900/80 text-text text-base transition-all duration-200 focus:outline-none focus:border-accent focus:ring-3 focus:ring-accent/10 placeholder:text-muted w-full" />
+          <input id="newTodoDueDate" type="date" aria-label="Due date"
+                  class="px-4 py-3.5 rounded-xl border border-border-light bg-slate-900/80 text-muted text-base transition-all duration-200 focus:outline-none focus:border-accent focus:ring-3 focus:ring-accent/10 w-full md:w-auto">
           <button id="addBtn" aria-label="Add todo" 
                   class="px-5 py-3.5 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer transition-all duration-200 hover:bg-accent-hover hover:-translate-y-0.5 whitespace-nowrap md:w-auto w-full">Add Task</button>
         </div>
@@ -97,10 +113,21 @@
 
       <section class="mb-5">
         <div class="flex gap-2 flex-wrap" role="tablist" aria-label="Filters">
-          <span class="pill active px-4 py-2 rounded-full border border-accent text-accent bg-accent/15 cursor-pointer text-sm font-medium transition-all duration-200" data-filter="all" role="tab" aria-selected="true">All</span>
-          <span class="pill px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent" data-filter="active" role="tab" aria-selected="false">Active</span>
-          <span class="pill px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent" data-filter="completed" role="tab" aria-selected="false">Completed</span>
-          <span class="pill px-4 py-2 rounded-full border border-border-light cursor-pointer text-muted text-sm font-medium transition-all duration-200 hover:bg-accent/10 hover:border-accent hover:text-accent" data-action="clearCompleted" title="Remove all completed">Clear Completed</span>
+          <span class="pill px-4 py-2 rounded-full border cursor-pointer text-sm font-medium transition-all duration-200" data-filter="all" role="tab" aria-selected="true">All</span>
+          <span class="pill px-4 py-2 rounded-full border cursor-pointer text-sm font-medium transition-all duration-200" data-filter="active" role="tab" aria-selected="false">Active</span>
+          <span class="pill px-4 py-2 rounded-full border cursor-pointer text-sm font-medium transition-all duration-200" data-filter="completed" role="tab" aria-selected="false">Completed</span>
+          <span class="pill px-4 py-2 rounded-full border cursor-pointer text-sm font-medium transition-all duration-200" data-action="clearCompleted" title="Remove all completed">Clear Completed</span>
+        </div>
+      </section>
+
+      <section class="border-t border-border mt-5 pt-5">
+        <div class="flex gap-3 items-center">
+          <div class="text-muted text-sm font-medium">Sort by:</div>
+          <div class="flex gap-2 flex-wrap" role="tablist" aria-label="Sorters">
+            <span class="pill px-4 py-2 rounded-full border cursor-pointer text-sm font-medium transition-all duration-200 active" data-sort="createdAt" role="tab" aria-selected="true">Created</span>
+            <span class="pill px-4 py-2 rounded-full border cursor-pointer text-sm font-medium transition-all duration-200" data-sort="dueAt" role="tab" aria-selected="false">Due Date</span>
+            <span class="pill px-4 py-2 rounded-full border cursor-pointer text-sm font-medium transition-all duration-200" data-sort="completed" role="tab" aria-selected="false">Completed</span>
+          </div>
         </div>
       </section>
 
